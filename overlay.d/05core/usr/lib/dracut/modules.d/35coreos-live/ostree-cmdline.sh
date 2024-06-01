@@ -11,7 +11,13 @@ set -euo pipefail
 case "${1:-unset}" in
     start)
         treepath="$(echo /sysroot/ostree/boot.1/*/*/0)"
-        echo "$(cat /proc/cmdline) ostree=${treepath#/sysroot}" > /tmp/cmdline
+        cmdline="$(cat /proc/cmdline)"
+        if [[ "$cmdline" =~ ^.*ostree=.* ]]; then
+            cmdline=$(echo $cmdline | sed -e "s,\(.*\)ostree=[^ ]*\(.*\),\1ostree=${treepath#/sysroot}\2,")
+        else
+            cmdline="${cmdline} ostree=${treepath#/sysroot}"
+        fi
+        echo "${cmdline}" > /tmp/cmdline
         mount --bind /tmp/cmdline /proc/cmdline
         ;;
     stop)
